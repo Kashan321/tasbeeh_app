@@ -7,8 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import AppLoading from 'expo-app-loading';
 import { primary_color } from '../Constants/Colors';
-
-const API_URL = 'https://api.alquran.cloud/v1/quran/quran-uthmani';
+import { QuranData } from '../Constants/Quran'; // Import the QuranData
 
 const Quran = () => {
   const { width, height } = Dimensions.get('window');
@@ -25,7 +24,7 @@ const Quran = () => {
   });
 
   useEffect(() => {
-    fetchQuranData();
+    setQuranData(QuranData.data.surahs); // Use the local JSON data
     getProgress();
   }, []);
 
@@ -42,16 +41,6 @@ const Quran = () => {
       setSearchResults([]);
     }
   }, [searchTerm]);
-
-  const fetchQuranData = async () => {
-    try {
-      const response = await fetch(API_URL);
-      const data = await response.json();
-      setQuranData(data.data.surahs);
-    } catch (error) {
-      console.error("Error fetching Quran data:", error);
-    }
-  };
 
   const saveProgress = async (ayahNumber) => {
     try {
@@ -164,7 +153,7 @@ const Quran = () => {
     headerText: {
       fontSize: 30,
       fontWeight: '800',
-      color: '#333',
+      color: 'white',
       textAlign: 'center',
     },
     input: {
@@ -253,7 +242,7 @@ const Quran = () => {
       <View style={styles.header}>
         <View style={styles.headerCont}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Tabs')}>
-            <Ionicons name="arrow-back-sharp" size={24} color="black" />
+            <Ionicons name="arrow-back-sharp" size={24} color="white" />
           </TouchableOpacity>
           <View style={styles.title}>
             <Text style={styles.headerText}>QURAN</Text>

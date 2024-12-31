@@ -102,8 +102,6 @@ export default function App() {
         <StatusBar style="auto" />
       </NavigationContainer>
     </LocationProvider>
-    // <Home />
-
   );
 }
 
