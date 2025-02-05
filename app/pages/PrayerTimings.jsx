@@ -1,12 +1,23 @@
+import { StyleSheet, Text, View, useWindowDimensions, ActivityIndicator, Button } from 'react-native';
 import React, { useContext, useEffect, useState } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { LocationContext } from '../Context/LocationContext';
 import Feather from '@expo/vector-icons/Feather';
 import { primary_color } from '../Constants/Colors';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
-import azan_tone from '../../assets/ring_tones/azan_tone.mp3'
+import azan from '../../assets/ring_tones/azan_tone.mp3';
+
+// Configure notification channels for Android
+if (Device.isDevice && Device.osName === 'Android') {
+  Notifications.setNotificationChannelAsync('default', {
+    name: 'default',
+    importance: Notifications.AndroidImportance.MAX,
+    sound: azan, // Custom sound
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#FF231F7C',
+  });
+}
+
 const PrayerTimings = () => {
   const { height, width } = useWindowDimensions();
   const { city, error: locationError, loading: locationLoading } = useContext(LocationContext);
@@ -79,7 +90,7 @@ const PrayerTimings = () => {
   }, []);
 
   const registerForPushNotificationsAsync = async () => {
-    if (Constants.isDevice) {
+    if (Device.isDevice) {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       if (existingStatus !== 'granted') {
@@ -90,18 +101,9 @@ const PrayerTimings = () => {
         alert('Failed to get push token for push notification!');
         return;
       }
-      const token = (await Notifications.getExpoPushTokenAsync()).data;
-      console.log(token);
+      console.log('Notification permissions granted:', finalStatus);
     } else {
       alert('Must use physical device for Push Notifications');
-    }
-
-    if (Platform.OS === 'android') {
-      Notifications.setNotificationChannelAsync('prayer-channel', {
-        name: 'Prayer Notifications',
-        importance: Notifications.AndroidImportance.HIGH,
-        sound: 'azan_tone', // Ensure this matches the file name in your assets
-      });
     }
   };
 
@@ -152,15 +154,29 @@ const PrayerTimings = () => {
   };
 
   const scheduleNotification = async (prayerName, prayerTime) => {
+    console.log(`Scheduling notification for ${prayerName} at ${prayerTime}`);
+    const triggerTime = prayerTime.getTime();
+    console.log(`Trigger timestamp: ${triggerTime}`);
     await Notifications.scheduleNotificationAsync({
       content: {
         title: `Time for ${prayerName}`,
         body: 'It\'s time to pray!',
-        sound: 'azan_tone.mp3', // Ensure this matches the file name in your assets
+        sound: azan,
         data: { prayerName },
       },
-      trigger: prayerTime,
+      trigger: { type: 'date', timestamp: triggerTime }, // Updated trigger format
     });
+  };
+
+  const stopRingtone = async () => {
+    await Notifications.dismissAllNotificationsAsync();
+  };
+
+  const testNotification = async () => {
+    console.log("Test button pressed");
+    const testTime = new Date(Date.now() + 10000);
+    console.log(`Scheduling test notification for ${testTime}`);
+    await scheduleNotification("Test Prayer", testTime); // Schedule a test notification for 10 seconds later
   };
 
   const styles = StyleSheet.create({
@@ -305,6 +321,7 @@ const PrayerTimings = () => {
           </>
         )}
       </View>
+      {/* <Button title="Test Notification" onPress={testNotification} /> */}
     </View>
   );
 };
