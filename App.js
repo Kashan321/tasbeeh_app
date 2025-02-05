@@ -9,7 +9,8 @@ import { LocationProvider } from './app/Context/LocationContext';
 import Home from './app/pages/Home';
 import Quran from './app/pages/Quran'
 import { createStackNavigator } from '@react-navigation/stack'
-
+import Tasbeeh_Settings from './app/Components/Tasbeeh_Settings';
+import { TasbeehColorProvider } from './app/Context/TasbeehColorContext';
 
 const Stack = createStackNavigator();
 export default function App() {
@@ -93,14 +94,17 @@ export default function App() {
 
   return (
     <LocationProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{headerShown: false}}>
-          <Stack.Screen name='Tabs' component={TabNavigation} />
-          <Stack.Screen name='Quran' component={Quran} />
-        </Stack.Navigator>
-        {/* <TabNavigation /> */}
-        <StatusBar style="auto" />
-      </NavigationContainer>
+      <TasbeehColorProvider>
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name='Tabs' component={TabNavigation} />
+            <Stack.Screen name='Quran' component={Quran} />
+            <Stack.Screen name='Tasbeeh_color' component={Tasbeeh_Settings} />
+          </Stack.Navigator>
+          {/* <TabNavigation /> */}
+          <StatusBar style="auto" />
+        </NavigationContainer>
+      </TasbeehColorProvider>
     </LocationProvider>
   );
 }

@@ -1,9 +1,12 @@
-import { StyleSheet, Text, View, useWindowDimensions, ActivityIndicator } from 'react-native';
 import React, { useContext, useEffect, useState } from 'react';
+import { StyleSheet, Text, View, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { LocationContext } from '../Context/LocationContext';
 import Feather from '@expo/vector-icons/Feather';
 import { primary_color } from '../Constants/Colors';
-
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
+import azan_tone from '../../assets/ring_tones/azan_tone.mp3'
 const PrayerTimings = () => {
   const { height, width } = useWindowDimensions();
   const { city, error: locationError, loading: locationLoading } = useContext(LocationContext);
@@ -63,6 +66,45 @@ const PrayerTimings = () => {
     };
   }, [city]);
 
+  useEffect(() => {
+    registerForPushNotificationsAsync();
+
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      stopRingtone();
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const registerForPushNotificationsAsync = async () => {
+    if (Constants.isDevice) {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        alert('Failed to get push token for push notification!');
+        return;
+      }
+      const token = (await Notifications.getExpoPushTokenAsync()).data;
+      console.log(token);
+    } else {
+      alert('Must use physical device for Push Notifications');
+    }
+
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('prayer-channel', {
+        name: 'Prayer Notifications',
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: 'azan_tone', // Ensure this matches the file name in your assets
+      });
+    }
+  };
+
   const findNextPrayer = (prayerTimes) => {
     const now = new Date();
     const times = Object.entries(prayerTimes)
@@ -82,6 +124,7 @@ const PrayerTimings = () => {
         }
         const newIntervalId = updateCountdown(times[i].time);
         setIntervalId(newIntervalId);
+        scheduleNotification(times[i].name, times[i].time);
         break;
       }
     }
@@ -106,6 +149,18 @@ const PrayerTimings = () => {
     }, 1000);
 
     return interval;
+  };
+
+  const scheduleNotification = async (prayerName, prayerTime) => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: `Time for ${prayerName}`,
+        body: 'It\'s time to pray!',
+        sound: 'azan_tone.mp3', // Ensure this matches the file name in your assets
+        data: { prayerName },
+      },
+      trigger: prayerTime,
+    });
   };
 
   const styles = StyleSheet.create({
@@ -179,13 +234,13 @@ const PrayerTimings = () => {
     prayerName: {
       fontWeight: 'bold',
       fontSize: 20,
-      color: '#fff', // Change to white for consistency
+      color: '#fff',
       marginLeft: 8,
     },
     prayerTime: {
       fontSize: 16,
-      color: '#fff', // Change to white for consistency
-      marginRight:25
+      color: '#fff',
+      marginRight: 25
     },
     noData: {
       textAlign: 'center',
@@ -199,12 +254,12 @@ const PrayerTimings = () => {
     nextPrayer: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: '#fff', // Change to white for consistency
+      color: '#fff',
       marginBottom: 10,
     },
     countdown: {
       fontSize: 16,
-      color: '#fff', // Change to white for consistency
+      color: '#fff',
     },
     errorText: {
       color: 'red',
@@ -232,7 +287,7 @@ const PrayerTimings = () => {
                 .map(([key, value]) => (
                   <View style={styles.prayerItem} key={key}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Feather name={prayerIcons[key] || "help-circle"} size={24} color="white" style={{marginLeft:20}} />
+                      <Feather name={prayerIcons[key] || "help-circle"} size={24} color="white" style={{ marginLeft: 20 }} />
                       <Text style={styles.prayerName}>{key.toUpperCase()}</Text>
                     </View>
                     <Text style={styles.prayerTime}>{value}</Text>

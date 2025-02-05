@@ -1,17 +1,17 @@
-import { StyleSheet, Text, View, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, TouchableOpacity } from 'react-native';
 import React from 'react';
 import { primary_color } from '../Constants/Colors';
 
-const THEME_COLOR = '#0891b2';
+const THEME_COLOR = primary_color;
 
-const Settings = () => {
+const Settings = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
       <View>
-        <View style={[styles.field1]}>
+        <TouchableOpacity style={[styles.field1]} onPress={() => navigation.navigate('Tasbeeh_color')}>
           <Text style={styles.text}>TASBEEH COLOUR</Text>
-        </View>
+        </TouchableOpacity>
         <View style={styles.field1}>
           <Text style={styles.text}>ABOUT THIS APP</Text>
         </View>
@@ -20,6 +20,9 @@ const Settings = () => {
         </View>
         <View style={styles.field1}>
           <Text style={styles.text}>PRIVACY POLICY</Text>
+        </View>
+        <View style={styles.field1}>
+          <Text style={styles.text}>APP PREFRENCES</Text>
         </View>
       </View>
     </View>
